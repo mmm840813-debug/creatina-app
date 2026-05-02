@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tracker Creatina</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.2em;
+        }
+
+        .status {
+            font-size: 4em;
+            font-weight: bold;
+            margin: 30px 0;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tomou {
+            color: #4CAF50;
+        }
+
+        .nao-tomou {
+            color: #f44336;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2em;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px;
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(76, 175, 80, 0.4);
+        }
+
+        .btn-nao {
+            background: linear-gradient(45deg, #f44336, #da190b);
+            box-shadow: 0 5px 15px rgba(244, 67, 54, 0.3);
+        }
+
+        .btn-nao:hover {
+            box-shadow: 0 8px 25px rgba(244, 67, 54, 0.4);
+        }
+
+        .streak {
+            background: #e8f5e8;
+            padding: 15px;
+            border-radius: 15px;
+            margin: 20px 0;
+            font-size: 1.1em;
+            color: #2e7d32;
+        }
+
+        .reset-btn {
+            background: #ff9800;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 0.9em;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .reset-btn:hover {
+            background: #f57c00;
+        }
+
+        .data {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>💪 Creatina</h1>
+        
+        <div id="status" class="status">Carregando...</div>
+        
+        <div id="streak" class="streak" style="display: none;">
+            Sequência atual: <span id="streak-count">0</span> dias
+        </div>
+        
+        <div>
+            <button id="btnTomou" class="btn">✅ Tomei Creatina</button>
+            <br>
+            <button id="btnNao" class="btn btn-nao">❌ Não Tomei</button>
+        </div>
+        
+        <button id="reset" class="reset-btn">🔄 Resetar Tudo</button>
+        
+        <div id="data" class="data"></div>
+    </div>
+
+    <script>
+        const STATUS_KEY = 'creatina_status';
+        const STREAK_KEY = 'creatina_streak';
+        const LAST_DATE_KEY = 'creatina_last_date';
+
+        let currentStatus = 'pending';
+        let streak = 0;
+        let lastDate = null;
+
+        function loadData() {
+            const savedStatus = localStorage.getItem(STATUS_KEY);
+            const savedStreak = localStorage.getItem(STREAK_KEY);
+            const savedDate = localStorage.getItem(LAST_DATE_KEY);
+            
+            const today = new Date().toDateString();
+            
+            if (savedStatus && savedDate === today) {
+                currentStatus = savedStatus;
+            } else {
+                // Se não foi marcado hoje, verifica se ontem foi marcado
+                if (savedDate) {
+                    const yesterday = new Date();
+                    yesterday.setDate(yesterday.getDate() - 1);
+                    if (savedDate === yesterday.toDateString() && savedStatus === 'tomou') {
+                        streak = parseInt(savedStreak || 0) + 1;
+                    } else {
+                        streak = 0;
+                    }
+                }
+                currentStatus = 'pending';
+            }
+            
+            if (savedStreak) {
+                streak = parseInt(savedStreak);
+            }
+            
+            lastDate = savedDate;
+            updateDisplay();
+        }
+
+        function saveData(status) {
+            const today = new Date().toDateString();
+            localStorage.setItem(STATUS_KEY, status);
+            localStorage.setItem(LAST_DATE_KEY, today);
+            
+            if (status === 'tomou') {
+                if (lastDate === today) {
+                    // Já marcado hoje, mantém streak
+                } else {
+                    streak++;
+                }
+            } else {
+                streak = 0;
+            }
+            
+            localStorage.setItem(STREAK_KEY, streak);
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            const statusEl = document.getElementById('status');
+            const streakEl = document.getElementById('streak');
+            const streakCountEl = document.getElementById('streak-count');
+            const dataEl = document.getElementById('data');
+            
+            const today = new Date().toDateString();
+            
+            if (currentStatus === 'tomou') {
+                statusEl.textContent = '✅ TOMOU!';
+                statusEl.className = 'status tomou';
+            } else if (currentStatus === 'nao') {
+                statusEl.textContent = '❌ Não Tomou';
+                statusEl.className = 'status nao-tomou';
+            } else {
+                statusEl.textContent = '⏳ Ainda não marcou hoje';
+                statusEl.className = 'status';
+            }
+            
+            if (streak > 0) {
+                streakEl.style.display = 'block';
+                streakCountEl.textContent = streak;
+            } else {
+                streakEl.style.display = 'none';
+            }
+            
+            dataEl.textContent = `Hoje: ${new Date().toLocaleDateString('pt-BR')}`;
+        }
+
+        // Event listeners
+        document.getElementById('btnTomou').addEventListener('click', () => {
+            currentStatus = 'tomou';
+            saveData('tomou');
+        });
+
+        document.getElementById('btnNao').addEventListener('click', () => {
+            currentStatus = 'nao';
+            saveData('nao');
+        });
+
+        document.getElementById('reset').addEventListener('click', () => {
+            if (confirm('Tem certeza que quer resetar tudo?')) {
+                localStorage.removeItem(STATUS_KEY);
+                localStorage.removeItem(STREAK_KEY);
+                localStorage.removeItem(LAST_DATE_KEY);
+                currentStatus = 'pending';
+                streak = 0;
+                updateDisplay();
+            }
+        });
+
+        // Carrega dados ao iniciar
+        loadData();
+
+        // Verifica se é um novo dia
+        setInterval(() => {
+            const today = new Date().toDateString();
+            if (lastDate !== today) {
+                loadData();
+            }
+        }, 60000); // Verifica a cada minuto
+    </script>
+</body>
+</html>
